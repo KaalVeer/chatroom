@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Chatroom</title>
+
+<style>
+
+* {
+
+margin: 0;
+
+padding: 0;
+
+box-sizing: border-box;
+
+}
+
+
+body {
+
+
+background-color: #f4f7fc;
+
+
+font-family: 'Inter', Arial, sans-serif;
+
+
+}
+
+
+.chat-container {
+
+width: 100%;
+
+max-width: 600px;
+
+height: 100vh;
+
+background: white;
+
+display: flex;
+
+flex-direction: column;
+
+border-radius: 10px;
+
+box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+
+overflow: hidden;
+
+}
+
+
+.header { 
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+padding: 12px;
+
+color: black;
+
+font-size: 1.2rem;
+
+font-weight: bold;
+
+
+}
+
+
+.header span {
+
+cursor: pointer;
+
+font-size: 18px;
+
+display: flex;
+
+align-items: center;
+
+gap: 10px;
+
+}
+
+
+#messages {
+
+flex: 1;
+
+overflow-y: auto;
+
+padding: 15px;
+
+display: flex;
+
+flex-direction: column;
+
+}
+
+
+.message {
+
+padding: 12px;
+
+border-radius: 15px;
+
+margin: 5px 0;
+
+max-width: 80%;
+
+position: relative;
+
+word-wrap: break-word;
+
+font-size: 16px;
+
+}
+
+
+.my-message {
+
+background: #007bff;
+
+color: white;
+
+align-self: flex-end;
+
+border-bottom-right-radius: 5px;
+
+}
+
+
+.other-message {
+
+background: #e0e0e0;
+
+align-self: flex-start;
+
+border-bottom-left-radius: 5px;
+
+}
+
+
+.message small {
+
+display: block;
+
+text-align: right;
+
+font-size: 12px;
+
+color: gray;
+
+margin-top: 5px;
+
+}
+
+
+.input-area {
+
+display: flex;
+
+padding: 10px;
+
+border-top: 1px solid #ddd;
+
+background: white;
+
+}
+
+
+.input-area input {
+
+flex: 1;
+
+padding: 10px;
+
+border: none;
+
+border-radius: 5px;
+
+outline: none;
+
+font-size: 16px;
+
+}
+
+
+.send-btn {
+
+background: none;
+
+border: none;
+
+cursor: pointer;
+
+margin-left: 5px;
+
+}
+
+
+.header svg {
+
+fill: black;
+
+color: black;
+
+stroke: black;
+
+width: 24px;
+
+height: 24px;
+
+margin-right: 0px; /* Left side push karega */
+
+}
+
+.delete-btn {
+
+position: absolute;
+
+top: 5px;
+
+right: 5px;
+
+background: none;
+
+border: none;
+
+cursor: pointer;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<div class="chat-container">
+
+<div class="header">
+
+Chatroom 
+
+<span>
+
+<svg id="logoutBtn" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="bkack" viewBox="0 0 24 24">
+
+<path d="M10 2h4v2h-4v-2zm8 0v2h3v16h-3v2h5v-20h-5zm-6 5l-7 7h5v6h4v-6h5l-7-7z"/>
+
+</svg>
+
+<svg id="deleteAllBtn" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="black" viewBox="0 0 24 24">
+
+<path d="M3 6l3 16h12l3-16h-18zm15 14h-12l-2.25-12h16.5l-2.25 12zm-7-11v10h2v-10h-2zm4 0v10h2v-10h-2zm-6 0v10h2v-10h-2zm6-5h-4v2h-7v2h18v-2h-7v-2z"/>
+
+</svg>
+
+</span>
+
+</div>
+
+<div id="messages"></div>
+
+
+<div class="input-area">
+
+<input type="text" id="messageInput" placeholder="Type a message...">
+
+<button id="sendBtn" class="send-btn">
+
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#007bff" viewBox="0 0 24 24">
+
+<path d="M2 21l21-9-21-9v8l15 1-15 1z"/>
+
+</svg>
+
+</button>
+
+</div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+
+import { getDatabase, ref, push, onChildAdded, remove, set, get } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+
+
+// 🔥 Firebase Config
+
+const firebaseConfig = {
+
+  apiKey: "AIzaSyB-u2IGgYoVMbOHGn6yixga6fuEKY6v-e0",
+            authDomain: "kaalveer-b371c.firebaseapp.com",
+            databaseURL: "https://kaalveer-b371c-default-rtdb.firebaseio.com",
+            projectId: "kaalveer-b371c",
+            storageBucket: "kaalveer-b371c.appspot.com",
+            messagingSenderId: "425730642511",
+            appId: "1:425730642511:web:02aeee99794da3929cd03a"
+        };
+
+
+// 🔹 Initialize Firebase
+
+const app = initializeApp(firebaseConfig);
+
+const db = getDatabase(app);
+
+
+// ✅ Multiple Admins List
+
+const ADMINS = {
+
+"Sahil6337": "$ahil",
+
+"1234e5": "꧁♡𝔨𝔯𝔦𝔰𝔥♡꧂",
+
+"1234yt5": "Aman Patel",
+
+"12geye34": "Shubham"
+
+};
+
+
+// 🔑 User Authentication
+
+let userName = localStorage.getItem("chatUserName");
+
+let userID = localStorage.getItem("chatUserID");
+
+
+if (!userName) {
+
+userName = prompt("Enter your name:");
+
+userID = prompt("Enter your User ID (Leave empty if normal user):");
+
+
+localStorage.setItem("chatUserName", userName);
+
+localStorage.setItem("chatUserID", userID);
+
+}
+
+
+// 🏆 Check if User is Admin
+
+let isAdmin = Object.keys(ADMINS).includes(userID);
+
+if (isAdmin) {
+
+userName = ADMINS[userID]; // सही एडमिन का नाम सेट करें
+
+document.getElementById("deleteAllBtn").style.display = "inline";
+
+}
+
+
+// 📤 Send Message
+
+document.getElementById("sendBtn").addEventListener("click", () => {
+
+let messageInput = document.getElementById("messageInput");
+
+let message = messageInput.value.trim();
+
+if (message === "") return;
+
+
+push(ref(db, "messages"), {
+
+name: userName,
+
+text: message,
+
+timestamp: Date.now(),
+
+isAdmin: isAdmin,
+
+});
+
+
+messageInput.value = "";
+
+});
+
+
+// 📥 Receive Messages
+
+onChildAdded(ref(db, "messages"), (snapshot) => {
+
+let msg = snapshot.val();
+
+let msgId = snapshot.key;
+
+let msgContainer = document.createElement("div");
+
+msgContainer.classList.add("message", msg.name === userName ? "my-message" : "other-message");
+
+
+// 🕒 Convert Timestamp to Readable Time
+
+let time = new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+
+// ✅ Admin Blue Tick SVG
+
+let adminBadge = msg.isAdmin
+
+? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 48 48">
+
+<polygon fill="#42a5f5" points="29.62,3 33.053,8.308 39.367,8.624 39.686,14.937 44.997,18.367 42.116,23.995 45,29.62 39.692,33.053 39.376,39.367 33.063,39.686 29.633,44.997 24.005,42.116 18.38,45 14.947,39.692 8.633,39.376 8.314,33.063 3.003,29.633 5.884,24.005 3,18.38 8.308,14.947 8.624,8.633 14.937,8.314 18.367,3.003 23.995,5.884"></polygon>
+
+<polygon fill="#fff" points="21.396,31.255 14.899,24.76 17.021,22.639 21.428,27.046 30.996,17.772 33.084,19.926"></polygon>
+
+</svg>`
+
+: "";
+
+
+// 🗑️ Delete Icon (Only for Admin)
+
+let deleteIcon = isAdmin
+
+? `<span class="delete-msg" data-id="${msgId}" style="cursor: pointer; color: red; margin-left: 10px;">🗑️</span>`
+
+: "";
+
+
+msgContainer.innerHTML = `<b>${msg.name} ${adminBadge}:</b> ${msg.text}
+
+<span class="time" style="font-size: 12px; color: gray; margin-left: 5px;">${time}</span> ${deleteIcon}`;
+
+document.getElementById("messages").appendChild(msgContainer);
+
+document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+
+});
+
+
+// 🚮 Delete Single Message (Admin Only)
+
+document.getElementById("messages").addEventListener("click", (e) => {
+
+if (e.target.classList.contains("delete-msg")) {
+
+let msgId = e.target.getAttribute("data-id");
+
+remove(ref(db, `messages/${msgId}`));
+
+}
+
+});
+
+
+// 🚀 Logout Function
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+
+localStorage.clear();
+
+location.reload();
+
+});
+
+
+// 🗑️ Admin: Delete All Messages
+
+document.getElementById("deleteAllBtn").addEventListener("click", async () => {
+
+if (!isAdmin) return;
+
+if (confirm("Are you sure you want to delete all messages?")) {
+
+let messagesRef = ref(db, "messages");
+
+get(messagesRef).then((snapshot) => {
+
+snapshot.forEach((childSnapshot) => {
+
+remove(ref(db, `messages/${childSnapshot.key}`));
+
+});
+
+});
+
+}
+
+});
+
+</script>
+
+</body>
+
+</html>
+
